@@ -3,6 +3,7 @@ import assets from '../assets/assets'
 import ThemeToggleBtn from './ThemeToggleBtn'
 import useActiveSection from './useActiveSection'
 import { motion } from 'motion/react'
+import logo from '../assets/vlang.svg'
 
 const links = [
   { label: 'Home', id: 'home', href: '#' },
@@ -51,12 +52,12 @@ const Navbar = ({ theme, setTheme }) => {
       className="flex justify-between items-center px-4 sm:px-12 lg:px-24 xl:px-40 py-4 sticky top-0 z-20 backdrop-blur-xl font-medium bg-white/50 dark:bg-gray-900/70 border-b border-gray-300 dark:border-gray-700 transition-all"
     >
       <a href="#" aria-label="Ventrix Technologies home">
-        <img
-          src="/src/assets/vlang.svg"
-          className="w-15 sm:w-30 rounded-full h-7"
-          alt="Ventrix Technologies"
-        />
-      </a>
+  <img
+    src={logo}
+    className="w-15 sm:w-30 rounded-full h-7"
+    alt="Ventrix Technologies"
+  />
+</a>
 
       <div
         className={`
