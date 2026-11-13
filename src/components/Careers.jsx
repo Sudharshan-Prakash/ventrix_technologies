@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { motion } from 'motion/react'
 import { inView, stagger, fadeUp, popUp } from './animations'
+import { submitApplication } from '../api'
 
 const roles = [
   {
@@ -82,6 +83,8 @@ const ApplyModal = ({ role, onClose }) => {
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState('idle') // idle | sending | success | error
   const firstField = useRef(null)
+  const [resume, setResume] = useState(null)
+  const [serverError, setServerError] = useState('')
 
   // Close on Esc, lock page scroll, focus first field
   useEffect(() => {
@@ -103,26 +106,28 @@ const ApplyModal = ({ role, onClose }) => {
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    const found = validate(values)
-    setErrors(found)
-    if (Object.keys(found).length) return
+  e.preventDefault()
+  const found = validate(values)
+  if (!resume) found.resume = 'Please attach your resume (PDF).'
+  else if (resume.type !== 'application/pdf') found.resume = 'Resume must be a PDF.'
+  else if (resume.size > 2 * 1024 * 1024) found.resume = 'Resume must be 2 MB or smaller.'
+  setErrors(found)
+  if (Object.keys(found).length) return
 
-    setStatus('sending')
-    try {
-      // TODO: replace with your Express endpoint
-      // const res = await fetch('/api/applications', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ role: role.title, ...values }),
-      // })
-      // if (!res.ok) throw new Error('Request failed')
-      await new Promise((r) => setTimeout(r, 800)) // demo delay, remove with real API
-      setStatus('success')
-    } catch {
-      setStatus('error')
-    }
+  setStatus('sending')
+  setServerError('')
+  try {
+    const body = new FormData()
+    body.append('role', role.title)
+    Object.entries(values).forEach(([k, v]) => body.append(k, v))
+    body.append('resume', resume) // file goes last
+    await submitApplication(body)
+    setStatus('success')
+  } catch (err) {
+    setServerError(err.message)
+    setStatus('error')
   }
+}
 
   const fields = [
     { name: 'fullName', label: 'Full name', type: 'text', placeholder: 'Your full name', autoComplete: 'name' },
@@ -223,11 +228,31 @@ const ApplyModal = ({ role, onClose }) => {
                 />
                 {errors.coverNote && <p className="mt-1.5 text-sm text-red-500">{errors.coverNote}</p>}
               </div>
+              <div>
+              <label htmlFor="resume" className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                Resume (PDF, max 2 MB) <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="resume"
+                type="file"
+                accept="application/pdf"
+                onChange={(e) => {
+                  setResume(e.target.files[0] || null)
+                  if (errors.resume) setErrors((er) => ({ ...er, resume: undefined }))
+                }}
+                aria-invalid={!!errors.resume}
+                className={`${inputClass(errors.resume)} file:mr-4 file:rounded-full file:border-0 file:bg-[#4B8DB8]/10 file:px-4 file:py-1.5 file:text-sm file:font-medium file:text-[#4B8DB8] hover:file:bg-[#4B8DB8]/20`}
+              />
+              {resume && !errors.resume && (
+                <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">{resume.name}</p>
+              )}
+              {errors.resume && <p className="mt-1.5 text-sm text-red-500">{errors.resume}</p>}
+            </div>
             </div>
 
             {status === 'error' && (
               <p className="mt-5 rounded-lg bg-red-50 dark:bg-red-950/40 px-4 py-3 text-sm text-red-600 dark:text-red-400">
-                Something went wrong. Please try again.
+                {serverError || 'Something went wrong. Please try again.'}
               </p>
             )}
 

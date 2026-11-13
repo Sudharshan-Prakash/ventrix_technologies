@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { motion } from 'motion/react'
 import { inView, stagger, fadeUp, slideLeft, slideRight } from './animations'
+import { submitEnquiry } from '../api'
 
 const services = [
   'Web Development',
@@ -55,21 +56,14 @@ const StartYourProject = () => {
     setErrors(found)
     if (Object.keys(found).length) return
 
-    setStatus('sending')
-    try {
-      // TODO: replace with your Express endpoint
-      // const res = await fetch('/api/enquiries', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(values),
-      // })
-      // if (!res.ok) throw new Error('Request failed')
-      await new Promise((r) => setTimeout(r, 800)) // demo delay, remove with real API
-      setStatus('success')
-      setValues(emptyForm)
-    } catch {
-      setStatus('error')
-    }
+   setStatus('sending')
+  try {
+    await submitEnquiry(values)
+    setStatus('success')
+    setValues(emptyForm)
+  } catch {
+    setStatus('error')
+  }
   }
 
   const fields = [
